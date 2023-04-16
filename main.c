@@ -85,7 +85,7 @@ int numberOfSegments()
 
 void showTitleScreen()
 {
-    printf("\n\n\n\n\n\n\n      GBSnake\n      by Sebb\n\n   START to play");
+    printf("\n\n\n\n\n\n\n      SnakeBoy\n      by  Sebb\n\n   START to play");
     while (joypad() != J_START)
     {
         // Wait
