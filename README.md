@@ -5,3 +5,9 @@ Tested to work with Game Boy, Game Boy Color, Game Boy Advance SP and Super Game
 
 ## How to play
 Get the latest ROM (SnakeBoy.gb) under the [Releases](https://github.com/sebb01/SnakeBoy/releases) page. You can play it using a Game Boy or Game Boy Color emulator, or loading it onto a flashcart and playing on a real Game Boy or Game Boy Color.
+
+## To do
+- Sound effects
+- Music
+- Nicer pause screen
+- Nicer title screen

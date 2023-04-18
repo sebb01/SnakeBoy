@@ -93,7 +93,6 @@ void showTitleScreen()
 
 void gameOver()
 {
-    // TODO: Stop music
     delay(GAMEOVER_WAIT_TIME);
     HIDE_SPRITES;
     printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
@@ -122,12 +121,30 @@ void collisionCheck()
     }
 }
 
+void pauseGame()
+{
+    // TODO: Play a pause jingle
+    UINT8 input = J_A;
+    HIDE_SPRITES;
+    delay(500);
+    while (input != J_START)
+    {
+        input = joypad();
+    }
+    delay(300);
+    SHOW_SPRITES;    
+}
+
 void fetchInput()
 {
     UINT8 input = joypad();
     if ((input == J_UP || input == J_DOWN || input == J_LEFT || input == J_RIGHT) && input != opposite(lastLatchedInput))
     {
         nextLatchedInput = input;
+    }
+    if (input == J_START)
+    {
+        pauseGame();
     }
 }
 
@@ -263,6 +280,7 @@ void main()
 {
     showTitleScreen();
     initialize();
+    delay(300);
 
     while (1)
     {
