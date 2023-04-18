@@ -13,12 +13,11 @@
 #define INIT_X 12 // Snake initial starting position
 #define INIT_Y 12 // Snake initial starting position
 #define SCALE 8   // Coordinates get multiplied by this amount
-#define DELAY 150
+#define GAMEOVER_WAIT_TIME 150
 #define FOOD_SPRITE 0
 #define HEAD_SPRITE 1
 #define BACKGROUND_TILE 7
 #define SEGMENT_TILE 8
-#define MUSIC_SPEED 5
 
 typedef struct Segment Segment;
 
@@ -95,7 +94,7 @@ void showTitleScreen()
 void gameOver()
 {
     // TODO: Stop music
-    delay(600);
+    delay(GAMEOVER_WAIT_TIME);
     HIDE_SPRITES;
     printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
     printf("     GAME OVER\n     Score:  %d\n\n   START to reset\n\n\n\n\n\n\n", numberOfSegments());
@@ -186,15 +185,32 @@ void move(int x_dist, int y_dist)
     }
 }
 
+UINT8 foodCollisionWithBody(UINT8 food_x, UINT8 food_y)
+{
+    if (food_x == head->x && food_y == head->y)
+    {
+        return 1;
+    }
+    Segment* segment = head;
+    while (segment != NULL)
+    {
+        if (food_x == segment->x && food_y == segment->y)
+        {
+            return 1;
+        }
+        segment = segment->child;
+    }
+    return 0;
+}
+
 void randomFood()
 {
-    // Randomize food position, repeat if it lands on the player
+    // Randomize food position, repeat if it lands on the snake
     do
     {
         food_x = rand() % (SCREEN_WIDTH - 4) + 3;
         food_y = rand() % (SCREEN_HEIGHT - 3) + 3;
-    } while (food_x == head->x && food_y == head->y);
-    // TODO: check for all snake segments
+    } while (foodCollisionWithBody(food_x, food_y));
 
     move_sprite(FOOD_SPRITE, food_x * SCALE, food_y * SCALE);
 }
