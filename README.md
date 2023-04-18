@@ -6,9 +6,9 @@ Tested to work with Game Boy, Game Boy Color, Game Boy Advance SP and Super Game
 ## How to play
 Get the latest ROM (SnakeBoy.gb) under the [Releases](https://github.com/sebb01/SnakeBoy/releases) page. You can play it using a Game Boy or Game Boy Color emulator such as [BGB](https://bgb.bircd.org/#downloads), or loading it onto a flashcart and playing on a real Game Boy or Game Boy Color.
 
-### Controls
-- D-Pad: Control the snake. You cannot directly go in the opposite direction the snake is heading.
-- Start: Start, pause and unpause the game.
+#### Controls
+- D-Pad:&emsp; Control the snake. You cannot directly go in the opposite direction the snake is heading.
+- Start:&emsp;&emsp;Start, pause and unpause the game.
 
 ## To do
 - Sound effects
