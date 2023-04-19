@@ -11,7 +11,6 @@ Get the latest ROM (SnakeBoy.gb) under the [Releases](https://github.com/sebb01/
 - Start:&emsp;&emsp;Start, pause and unpause the game.
 
 ## To do
-- Sound effects
 - Music
 - Nicer pause screen
 - Nicer title screen
