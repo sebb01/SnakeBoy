@@ -19,6 +19,7 @@
 #define BACKGROUND_TILE 7
 #define SEGMENT_TILE 8
 
+typedef unsigned char UINT8;
 typedef struct Segment Segment;
 
 struct Segment
