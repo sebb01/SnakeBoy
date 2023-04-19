@@ -39,6 +39,39 @@ UINT8 consumedFood = 0;
 UINT8 loop_counter = SCALE;
 UINT8 is_logic_frame = 1;
 
+void soundInitialization()
+{
+    // Enable sound playback
+    NR52_REG = 0x80;
+    NR50_REG = 0x77;
+    NR51_REG = 0xFF;
+
+    // see https://github.com/bwhitman/pushpin/blob/master/src/gbsound.txt
+    // comments adapted from https://gist.github.com/gingemonster/600c33f7dd97ecbf785eca8c84772c9a
+    // chanel 1 register 0, Frequency sweep settings
+    // 7	Unused
+    // 6-4	Sweep time(update rate) (if 0, sweeping is off)
+    // 3	Sweep Direction (1: decrease, 0: increase)
+    // 2-0	Sweep RtShift amount (if 0, sweeping is off)
+    NR10_REG = 0; 
+
+    // chanel 1 register 1: Wave pattern duty and sound length
+    // Channels 1 2 and 4
+    // 7-6	Wave pattern duty cycle 0-3 (12.5%, 25%, 50%, 75%), duty cycle is how long a quadrangular  wave is "on" vs "of" so 50% (2) is both equal.
+    // 5-0 sound length (higher the number shorter the sound)
+    // 01000000 is 0x40, duty cycle 1 (25%), wave length 0 (long)
+    NR11_REG = 0b10001100;
+
+    // chanel 1 register 2: Volume Envelope (Makes the volume get louder or quieter each "tick")
+    // On Channels 1 2 and 4
+    // 7-4	(Initial) Channel Volume
+    // 3	Volume sweep direction (0: down; 1: up)
+    // 2-0	Length of each step in sweep (if 0, sweeping is off)
+    // NOTE: each step is n/64 seconds long, where n is 1-7	
+    // 0111 0011 is 0x73, volume 7, sweep down, step length 3
+    NR12_REG = 0b01110001;
+}
+
 int opposite(int in)
 {
     switch (in)
@@ -92,12 +125,56 @@ void showTitleScreen()
     }
 }
 
+void playGameOverSound()
+{
+    // see https://github.com/bwhitman/pushpin/blob/master/src/gbsound.txt
+    // chanel 1 register 0, Frequency sweep settings
+    // 7	Unused
+    // 6-4	Sweep time(update rate) (if 0, sweeping is off)
+    // 3	Sweep Direction (1: decrease, 0: increase)
+    // 2-0	Sweep RtShift amount (if 0, sweeping is off)
+    NR10_REG = 0b00111111; 
+
+    // chanel 1 register 1: Wave pattern duty and sound length
+    // Channels 1 2 and 4
+    // 7-6	Wave pattern duty cycle 0-3 (12.5%, 25%, 50%, 75%), duty cycle is how long a quadrangular  wave is "on" vs "of" so 50% (2) is both equal.
+    // 5-0 sound length (higher the number shorter the sound)
+    NR11_REG = 0b00000000;
+    
+    // chanel 1 register 2: Volume Envelope (Makes the volume get louder or quieter each "tick")
+    // On Channels 1 2 and 4
+    // 7-4	(Initial) Channel Volume
+    // 3	Volume sweep direction (0: down; 1: up)
+    // 2-0	Length of each step in sweep (if 0, sweeping is off)
+    // NOTE: each step is n/64 seconds long, where n is 1-7	
+    // 0111 0011 is 0x73, volume 7, sweep down, step length 3
+    NR12_REG = 0b01111000;
+
+    // chanel 1 register 3: Frequency LSbs (Least Significant bits) and noise options
+    // 7-0	8 Least Significant bits of frequency (3 Most Significant Bits are set in register 4)
+    NR13_REG = 0;   
+
+    // chanel 1 register 4: Playback and frequency MSbs
+    // 7	Initialize (trigger channel start, AKA channel INIT) (Write only)
+    // 6	Consecutive select/length counter enable (Read/Write). When "0", regardless of the length of data on the NR11 register, sound can be produced consecutively.  When "1", sound is generated during the time period set by the length data contained in register NR11.  After the sound is ouput, the Sound 1 ON flag, at bit 0 of register NR52 is reset.
+    // 5-3	Unused
+    // 2-0	3 Most Significant bits of frequency
+    NR14_REG = 0b10000110;	  
+}
+
+void stopSound()
+{
+    NR52_REG = 0;
+}
+
 void gameOver()
 {
+    playGameOverSound();
     delay(GAMEOVER_WAIT_TIME);
     HIDE_SPRITES;
     printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
     printf("     GAME OVER\n     Score:  %d\n\n   START to reset\n\n\n\n\n\n\n", numberOfSegments());
+    stopSound();
     while (joypad() != J_START)
     {
         // Wait
@@ -124,14 +201,28 @@ void collisionCheck()
 
 void pauseGame()
 {
-    // TODO: Play a pause jingle
     UINT8 input = J_A;
     HIDE_SPRITES;
+
+    soundInitialization();
+    NR13_REG = 0;   
+    // chanel 1 register 4: Playback and frequency MSbs
+    // 7	Initialize (trigger channel start, AKA channel INIT) (Write only)
+    // 6	Consecutive select/length counter enable (Read/Write). When "0", regardless of the length of data on the NR11 register, sound can be produced consecutively.  When "1", sound is generated during the time period set by the length data contained in register NR11.  After the sound is ouput, the Sound 1 ON flag, at bit 0 of register NR52 is reset.
+    // 5-3	Unused
+    // 2-0	3 Most Significant bits of frequency
+    NR14_REG = 0b11000111;	    
+
     delay(500);
     while (input != J_START)
     {
         input = joypad();
     }
+
+    // chanel 1 register 3: Frequency LSbs (Least Significant bits) and noise options
+    // 7-0	8 Least Significant bits of frequency (3 Most Significant Bits are set in register 4)
+    NR13_REG = 64;
+    NR14_REG = 0b11000111;
     delay(300);
     SHOW_SPRITES;    
 }
@@ -254,6 +345,8 @@ void moveAccordingToInput(int input)
 
 void initialize()
 {
+    soundInitialization();
+    
     // Initialize head of snake to initial coordinates
     head = (Segment *)calloc(1, sizeof(Segment));
     head->x = INIT_X;
@@ -275,6 +368,34 @@ void initialize()
 
     SHOW_SPRITES;
     SHOW_BKG;
+}
+
+void playFoodSound()
+{
+    // see https://github.com/bwhitman/pushpin/blob/master/src/gbsound.txt
+    // chanel 1 register 0, Frequency sweep settings
+    // 7	Unused
+    // 6-4	Sweep time(update rate) (if 0, sweeping is off)
+    // 3	Sweep Direction (1: decrease, 0: increase)
+    // 2-0	Sweep RtShift amount (if 0, sweeping is off)
+    NR10_REG = 0b00010110; 
+
+    // chanel 1 register 1: Wave pattern duty and sound length
+    // Channels 1 2 and 4
+    // 7-6	Wave pattern duty cycle 0-3 (12.5%, 25%, 50%, 75%), duty cycle is how long a quadrangular  wave is "on" vs "of" so 50% (2) is both equal.
+    // 5-0 sound length (higher the number shorter the sound)
+    NR11_REG = 0b11001100;
+
+    // chanel 1 register 3: Frequency LSbs (Least Significant bits) and noise options
+    // 7-0	8 Least Significant bits of frequency (3 Most Significant Bits are set in register 4)
+    NR13_REG = 0;   
+
+    // chanel 1 register 4: Playback and frequency MSbs
+    // 7	Initialize (trigger channel start, AKA channel INIT) (Write only)
+    // 6	Consecutive select/length counter enable (Read/Write). When "0", regardless of the length of data on the NR11 register, sound can be produced consecutively.  When "1", sound is generated during the time period set by the length data contained in register NR11.  After the sound is ouput, the Sound 1 ON flag, at bit 0 of register NR52 is reset.
+    // 5-3	Unused
+    // 2-0	3 Most Significant bits of frequency
+    NR14_REG = 0b11000111;	  
 }
 
 void main()
@@ -300,6 +421,7 @@ void main()
             {
                 randomFood();
                 consumedFood = 1;
+                playFoodSound();
             }
 
             // Save this to know which direction snake is currently travelling
