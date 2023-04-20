@@ -7,17 +7,21 @@
 #include "time.h"
 #include "BackgroundMap.c"
 #include "BackgroundTiles.c"
+//#include "hUGEDriver/hUGEDriver.h"
 
 #define SCREEN_WIDTH 20
 #define SCREEN_HEIGHT 19
 #define INIT_X 12 // Snake initial starting position
 #define INIT_Y 12 // Snake initial starting position
 #define SCALE 8   // Coordinates get multiplied by this amount
-#define GAMEOVER_WAIT_TIME 150
+#define DELAY 150
 #define FOOD_SPRITE 0
 #define HEAD_SPRITE 1
 #define BACKGROUND_TILE 7
 #define SEGMENT_TILE 8
+#define GAMEOVER_WAIT_TIME 500
+
+//extern const hUGESong_t Song;
 
 typedef unsigned char UINT8;
 typedef struct Segment Segment;
@@ -69,7 +73,7 @@ void soundInitialization()
     // 2-0	Length of each step in sweep (if 0, sweeping is off)
     // NOTE: each step is n/64 seconds long, where n is 1-7	
     // 0111 0011 is 0x73, volume 7, sweep down, step length 3
-    NR12_REG = 0b01110001;
+    NR12_REG = 0b11110001;
 }
 
 int opposite(int in)
@@ -118,7 +122,7 @@ int numberOfSegments()
 
 void showTitleScreen()
 {
-    printf("\n\n\n\n\n\n\n      SnakeBoy\n      by  Sebb\n\n   START to play");
+    printf("\n\n\n\n\n\n      SnakeBoy\n      by  Sebb\n\n\n    Press  Start");
     while (joypad() != J_START)
     {
         // Wait
@@ -148,7 +152,7 @@ void playGameOverSound()
     // 2-0	Length of each step in sweep (if 0, sweeping is off)
     // NOTE: each step is n/64 seconds long, where n is 1-7	
     // 0111 0011 is 0x73, volume 7, sweep down, step length 3
-    NR12_REG = 0b01111000;
+    NR12_REG = 0b11111000;
 
     // chanel 1 register 3: Frequency LSbs (Least Significant bits) and noise options
     // 7-0	8 Least Significant bits of frequency (3 Most Significant Bits are set in register 4)
@@ -169,11 +173,19 @@ void stopSound()
 
 void gameOver()
 {
+    //remove_VBL(hUGE_dosound);
     playGameOverSound();
     delay(GAMEOVER_WAIT_TIME);
     HIDE_SPRITES;
+    int numSegments = numberOfSegments();
     printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
-    printf("     GAME OVER\n     Score:  %d\n\n   START to reset\n\n\n\n\n\n\n", numberOfSegments());
+    if (numSegments >= 287) // Maximum amount of segments that can be on screen
+    {
+        printf("      YOU  WIN\n      Nice One\n     Score:  %d\n\n\n   START to reset\n\n\n\n\n\n\n", numSegments);
+    }
+    else{
+        printf("     GAME OVER\n     Score: %d\n\n\n   START to reset\n\n\n\n\n\n\n", numSegments);
+    }
     stopSound();
     while (joypad() != J_START)
     {
@@ -204,6 +216,7 @@ void pauseGame()
     UINT8 input = J_A;
     HIDE_SPRITES;
 
+    //remove_VBL(hUGE_dosound);
     soundInitialization();
     NR13_REG = 0;   
     // chanel 1 register 4: Playback and frequency MSbs
@@ -225,6 +238,7 @@ void pauseGame()
     NR14_REG = 0b11000111;
     delay(300);
     SHOW_SPRITES;    
+    //add_VBL(hUGE_dosound);
 }
 
 void fetchInput()
@@ -368,6 +382,9 @@ void initialize()
 
     SHOW_SPRITES;
     SHOW_BKG;
+
+    //hUGE_init(&Song);
+    //add_VBL(hUGE_dosound);
 }
 
 void playFoodSound()
@@ -385,6 +402,15 @@ void playFoodSound()
     // 7-6	Wave pattern duty cycle 0-3 (12.5%, 25%, 50%, 75%), duty cycle is how long a quadrangular  wave is "on" vs "of" so 50% (2) is both equal.
     // 5-0 sound length (higher the number shorter the sound)
     NR11_REG = 0b11001100;
+
+    // chanel 1 register 2: Volume Envelope (Makes the volume get louder or quieter each "tick")
+    // On Channels 1 2 and 4
+    // 7-4	(Initial) Channel Volume
+    // 3	Volume sweep direction (0: down; 1: up)
+    // 2-0	Length of each step in sweep (if 0, sweeping is off)
+    // NOTE: each step is n/64 seconds long, where n is 1-7	
+    // 0111 0011 is 0x73, volume 7, sweep down, step length 3
+    NR12_REG = 0b11111000;
 
     // chanel 1 register 3: Frequency LSbs (Least Significant bits) and noise options
     // 7-0	8 Least Significant bits of frequency (3 Most Significant Bits are set in register 4)
